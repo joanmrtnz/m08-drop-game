@@ -36,7 +36,7 @@ public class Main implements ApplicationListener {
     @Override
     public void create() {
         backgroundTexture = new Texture("background.png");
-        restartTexture = new Texture("restart.png"); // Botón de reinicio
+        restartTexture = new Texture("restart.png");
         bucketTexture = new Texture("bucket.png");
         dropTexture = new Texture("drop.png");
         dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
@@ -48,7 +48,7 @@ public class Main implements ApplicationListener {
         bucketSprite = new Sprite(bucketTexture);
         bucketSprite.setSize(6, 6);
         restartSprite = new Sprite(restartTexture);
-        restartSprite.setSize(10, 10); // Tamaño del botón
+        restartSprite.setSize(10, 10);
         restartRectangle = new Rectangle();
 
         touchPos = new Vector2();
@@ -68,7 +68,7 @@ public class Main implements ApplicationListener {
         gameOver = false;
         dropSprites.clear();
         bucketSprite.setPosition(viewport.getWorldWidth() / 2 - bucketSprite.getWidth() / 2, 2);
-        restartSprite.setPosition(viewport.getWorldWidth() / 2 - restartSprite.getWidth() / 2, viewport.getWorldHeight() / 3);
+        restartSprite.setPosition(viewport.getWorldWidth() - restartSprite.getWidth() - 2, 1);
         music.setLooping(true);
         music.setVolume(0.5f);
         music.play();
@@ -134,12 +134,19 @@ public class Main implements ApplicationListener {
             dropSprite.translateY(-6f * delta);
             dropRectangle.set(dropSprite.getX(), dropSprite.getY(), dropSprite.getWidth(), dropSprite.getHeight());
 
+            // Si la gota toca el suelo, termina el juego
             if (dropSprite.getY() < 0) {
                 gameOver = true;
                 gameOverSound.play();
                 music.stop();
                 return;
-            } else if (bucketRectangle.overlaps(dropRectangle)) {
+            }
+
+            // Hit test solo desde la parte superior del cubo
+            float bucketTopY = bucketRectangle.y + bucketRectangle.height;
+            float dropBottomY = dropRectangle.y;
+
+            if (dropBottomY <= bucketTopY && dropBottomY > bucketTopY - 1 && dropRectangle.overlaps(bucketRectangle)) {
                 dropSprites.removeIndex(i);
                 dropSound.play();
                 score++;
@@ -152,6 +159,8 @@ public class Main implements ApplicationListener {
             createDroplet();
         }
     }
+
+
 
     private void draw() {
         ScreenUtils.clear(Color.BLACK);
@@ -169,11 +178,18 @@ public class Main implements ApplicationListener {
             for (Sprite dropSprite : dropSprites) {
                 dropSprite.draw(spriteBatch);
             }
+
+            // Muestra el puntaje en la parte superior izquierda
             font.draw(spriteBatch, "Puntuació: " + score, 1, worldHeight - 1);
+
+            // Muestra los FPS en la parte superior derecha
+            font.draw(spriteBatch, "FPS: " + Gdx.graphics.getFramesPerSecond(), worldWidth - 8, worldHeight - 1);
         } else {
             font.getData().setScale(0.3f);
             font.draw(spriteBatch, "GAME OVER", worldWidth / 3, worldHeight / 2);
             font.draw(spriteBatch, "Puntuació: " + score, worldWidth / 3, worldHeight / 2 - 5);
+
+            // Dibuja el botón de reinicio en la parte inferior derecha
             restartSprite.draw(spriteBatch);
         }
 
